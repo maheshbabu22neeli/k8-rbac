@@ -329,8 +329,34 @@ $ kubectl get sa -n roboshop
 NAME                     SECRETS   AGE
 default                  0         150m
 roboshop-secret-reader   0         54s
-
-
-
 ```
 
+- Now, create a pod with the above created service account and try to access the secrets manager value using AWS CLI inside the pod.
+```shell
+apiVersion: v1
+kind: Pod
+metadata:
+  name: aws-cli
+  namespace: roboshop
+spec:
+  serviceAccountName: roboshop-secret-reader
+  containers:
+    - name: aws-cli
+      image: amazon/aws-cli
+      command: ["sleep","2000"]   
+```
+
+```shell
+bash-5.2# aws secretsmanager get-secret-value --secret-id roboshop-dev
+{
+    "ARN": "arn:aws:secretsmanager:us-east-1:<ACCOUNT-ID>:secret:roboshop-dev-1RvvT6",
+    "Name": "roboshop-dev",
+    "VersionId": "1c1aa410-c0ff-49f8-96d4-4278fb4bc87f",
+    "SecretString": "{\"project\":\"roboshop-rbac\"}",
+    "VersionStages": [
+        "AWSCURRENT"
+    ],
+    "CreatedDate": "2026-04-19T06:35:46.393000+00:00"
+}
+```
+- We successfully read the secrets.
