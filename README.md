@@ -102,51 +102,37 @@ Error from server (Forbidden): deployments.apps is forbidden: User "ramesh" cann
 ```shell
 $ kubectl apply -f 04-admin-role.yaml
 $ kubectl get role -n roboshop
-
-$ kubectl apply -f 02-role-binding.yaml
+$ kubectl apply -f 05-admin-role-binding.yaml
 $ kubectl get rolebinding -n roboshop
-NAME              ROLE                AGE
-trainee-binding   Role/trainee-role   10s
+
 ```
 - Now, create aws-auth configmap in kube-system namespace and add the user ARN to the mapRoles section.
-- This can be done by following command:
+- Now add mapUsers section for the user ARN in the above configmap and apply the changes.
 ```shell
-$ kubectl get configmap aws-auth -n kube-system -o  yaml                              -> get existing configmap
 apiVersion: v1
-data:
-  mapRoles: |
-    - rolearn: arn:aws:iam::<ACCOUNT-ID>:role/eksctl-roboshop-nodegroup-spot-NodeInstanceRole-k1FHX0MGiC44
-      groups:
-      - system:bootstrappers
-      - system:nodes
-      username: system:node:{{EC2PrivateDNSName}}
 kind: ConfigMap
 metadata:
   creationTimestamp: "2026-04-19T03:15:37Z"
   name: aws-auth
   namespace: kube-system
-  resourceVersion: "1252"
-  uid: fa9bc09e-bd60-4c84-baf4-54ff8bd9cce1
 
-```
-- Now add mapUsers section for the user ARN in the above configmap and apply the changes.
-```shell
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  name: trainee-binding
-  namespace: roboshop
-
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: Role
-  name: trainee-role
-
-subjects:
-  - apiGroup: rbac.authorization.k8s.io
-    kind: User
-    name: ramesh # "name" is case sensitive, and it is created through aws console
-    
+data:
+  mapRoles: |
+    - rolearn: arn:aws:iam::204427113986:role/eksctl-roboshop-nodegroup-spot-NodeInstanceRole-k1FHX0MGiC44
+      groups:
+      - system:bootstrappers
+      - system:nodes
+      username: system:node:{{EC2PrivateDNSName}}
+  mapUsers: |
+    - userarn: arn:aws:iam::204427113986:user/ramesh
+      groups:
+      - trainee-binding
+      username: ramesh
+    - userarn: arn:aws:iam::204427113986:user/suresh
+      groups:
+      - admin-binding
+      username: suresh
+         
 $ kubectl apply -f 03-aws-auth.yaml
 Warning: resource configmaps/aws-auth is missing the kubectl.kubernetes.io/last-applied-configuration annotation which is required by kubectl apply. kubectl apply should only be used on resources created declaratively by either kubectl create --save-config or kubectl apply. The missing annotation will be patched automatically.
 configmap/aws-auth configured
