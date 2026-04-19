@@ -118,17 +118,17 @@ metadata:
 
 data:
   mapRoles: |
-    - rolearn: arn:aws:iam::204427113986:role/eksctl-roboshop-nodegroup-spot-NodeInstanceRole-k1FHX0MGiC44
+    - rolearn: arn:aws:iam::<ACCOUNT-ID>:role/eksctl-roboshop-nodegroup-spot-NodeInstanceRole-k1FHX0MGiC44
       groups:
       - system:bootstrappers
       - system:nodes
       username: system:node:{{EC2PrivateDNSName}}
   mapUsers: |
-    - userarn: arn:aws:iam::204427113986:user/ramesh
+    - userarn: arn:aws:iam::<ACCOUNT-ID>:user/ramesh
       groups:
       - trainee-binding
       username: ramesh
-    - userarn: arn:aws:iam::204427113986:user/suresh
+    - userarn: arn:aws:iam::<ACCOUNT-ID>:user/suresh
       groups:
       - admin-binding
       username: suresh
@@ -137,21 +137,26 @@ $ kubectl apply -f 03-aws-auth.yaml
 Warning: resource configmaps/aws-auth is missing the kubectl.kubernetes.io/last-applied-configuration annotation which is required by kubectl apply. kubectl apply should only be used on resources created declaratively by either kubectl create --save-config or kubectl apply. The missing annotation will be patched automatically.
 configmap/aws-auth configured
 ```
-- Now, ask ramesh to login and verify the access to the cluster using kubectl command.
+- Now, ask suresh to login and verify the access to the cluster using kubectl command.
 ```shell
 Create an Ec2 instance 
 Install kubectl
 Do aws configure 
+
+$ aws sts get-caller-identity
+{
+    "UserId": "AIDAS7GGOGYBHEXOOYDVS",
+    "Account": "<ACCOUNT-ID>",
+    "Arn": "arn:aws:iam::<ACCOUNT-ID>:user/suresh"
+}
+
 $ aws eks update-kubeconfig --name roboshop --region us-east-1
-Added new context arn:aws:eks:us-east-1:<ACCOUNT-ID>:cluster/roboshop to /home/ec2-user/.kube/config
+Updated context arn:aws:eks:us-east-1:204427113986:cluster/roboshop in /home/ec2-user/.kube/config
 
-$ kubectl get pods                                      -> ramesh does not have access to default namespace
-Error from server (Forbidden): pods is forbidden: User "ramesh" cannot list resource "pods" in API group "" in the namespace "default"
-
-13.222.134.210 | 172.31.16.221 | t3.micro | null
-[ ec2-user@ip-172-31-16-221 ~ ]$ kubectl get pods -n roboshop   -> ramesh have access to roboshop namespace
+$ kubectl get pods -n roboshop                         -> suresh has access to pod
 No resources found in roboshop namespace.
 
-$ kubectl get deployment -n roboshop                    -> ramesh does not have access to deployments in roboshop namespace
-Error from server (Forbidden): deployments.apps is forbidden: User "ramesh" cannot list resource "deployments" in API group "apps" in the namespace "roboshop"
+$ kubectl get deployments -n roboshop                  -> suresh has access to deployments
+No resources found in roboshop namespace.
+
 ```
