@@ -272,6 +272,7 @@ data:
 ```
 
 # Service Account
+![service-account-rbac.drawio.svg](images/service-account-rbac.drawio.svg)
 - With the above user / group rbac process, we can provide access to the users to access the k8 resources.
 - But these user accounts can't be used in the application process to access any resources.
 - Users can be resign and there accounts can be deactivated and it will impact the application process if we are using those user accounts in the application process.
