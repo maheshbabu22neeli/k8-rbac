@@ -21,6 +21,14 @@ data:
       groups:
       - admin-binding
       username: suresh
+    - userarn: arn:aws:iam::204427113986:user/john
+      groups:
+      - trainee-group
+      username: john
+    - userarn: arn:aws:iam::204427113986:user/rahim
+      groups:
+      - trainee-group
+      username: rahim
       
       
       

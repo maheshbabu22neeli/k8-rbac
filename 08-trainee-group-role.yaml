@@ -1,0 +1,12 @@
+# This is just a Role similar to 01-role.yaml, we are giving a name as roboshop-trainee,
+# and we are giving access to pods in the roboshop namespace
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: trainee-group
+  namespace: roboshop
+
+rules:
+  - apiGroups: [""] # "" indicates the core API group
+    resources: ["pods"]
+    verbs: ["get", "watch", "list"]
