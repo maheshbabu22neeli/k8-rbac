@@ -21,16 +21,38 @@ Kubernetes Role-Based Access Control
 - Create policy with `ClusterDescribe` permissions in AWS console.
 - Create User from AWS console and assign the above created policy to the user.
 
-- Create a Role with the following permissions:
-```yaml
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-  namespace: roboshop
-  name: trainee
-rules:
-  - apiGroups: [""] # "" indicates the core API group
-    resources: ["pods"]
-    verbs: ["get", "watch", "list"]
+```shell
+- Create namespace using `kubectl create namespace roboshop`
+$ kubectl apply -f 01-role.yaml
+$ kubectl get role -n roboshop
+NAME           CREATED AT
+trainee-role   2026-04-19T04:11:13Z
+
+$ kubectl apply -f 02-role-binding.yaml
+$ kubectl get rolebinding -n roboshop
+NAME              ROLE                AGE
+trainee-binding   Role/trainee-role   10s
 ```
-- 
+- Now, create aws-auth configmap in kube-system namespace and add the user ARN to the mapRoles section.
+- This can be done by following command:
+```shell
+$ kubectl get configmap aws-auth -n kube-system -o  yaml                              -> get existing configmap
+apiVersion: v1
+data:
+  mapRoles: |
+    - rolearn: arn:aws:iam::204427113986:role/eksctl-roboshop-nodegroup-spot-NodeInstanceRole-k1FHX0MGiC44
+      groups:
+      - system:bootstrappers
+      - system:nodes
+      username: system:node:{{EC2PrivateDNSName}}
+kind: ConfigMap
+metadata:
+  creationTimestamp: "2026-04-19T03:15:37Z"
+  name: aws-auth
+  namespace: kube-system
+  resourceVersion: "1252"
+  uid: fa9bc09e-bd60-4c84-baf4-54ff8bd9cce1
+
+```
+- Now add mapUsers section for the user ARN in the above configmap and apply the changes.
+
