@@ -18,6 +18,7 @@ Kubernetes Role-Based Access Control
 - RBAC is a critical component of Kubernetes security, and it is important to understand how to use it effectively to protect your cluster and resources.
 
 ### Role and Role Binding     -- Trainee 
+- Role and Role-Binding are namespace scoped. So, we will create Role and Role Binding in `roboshop` namespace.
 - Create policy with `ClusterDescribe` permissions in AWS console.
 - Create User from AWS console and assign the above created policy to the user.
 
@@ -159,4 +160,12 @@ No resources found in roboshop namespace.
 $ kubectl get deployments -n roboshop                  -> suresh has access to deployments
 No resources found in roboshop namespace.
 
+$ kubectl get pv                                        -> suresh does not have access to peristent volumes at cluster scope
+Error from server (Forbidden): persistentvolumes is forbidden: User "suresh" cannot list resource "persistentvolumes" in API group "" at the cluster scope
+
 ```
+
+
+### Cluster-Role and Cluster Role Binding
+- Cluster-Role and Cluster Role Binding are cluster scoped.
+- Create Cluster Role with `ClusterDescribe` permissions in AWS console.
