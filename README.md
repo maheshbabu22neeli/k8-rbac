@@ -17,7 +17,7 @@ Kubernetes Role-Based Access Control
 - RBAC is a powerful tool for managing access to your Kubernetes cluster, and it is essential for maintaining the security and integrity of your cluster.
 - RBAC is a critical component of Kubernetes security, and it is important to understand how to use it effectively to protect your cluster and resources.
 
-### Role and Role Binding
+### Role and Role Binding     -- Trainee 
 - Create policy with `ClusterDescribe` permissions in AWS console.
 - Create User from AWS console and assign the above created policy to the user.
 
@@ -40,7 +40,7 @@ $ kubectl get configmap aws-auth -n kube-system -o  yaml                        
 apiVersion: v1
 data:
   mapRoles: |
-    - rolearn: arn:aws:iam::204427113986:role/eksctl-roboshop-nodegroup-spot-NodeInstanceRole-k1FHX0MGiC44
+    - rolearn: arn:aws:iam::<ACCOUNT-ID>:role/eksctl-roboshop-nodegroup-spot-NodeInstanceRole-k1FHX0MGiC44
       groups:
       - system:bootstrappers
       - system:nodes
@@ -55,4 +55,117 @@ metadata:
 
 ```
 - Now add mapUsers section for the user ARN in the above configmap and apply the changes.
+```shell
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: trainee-binding
+  namespace: roboshop
 
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: trainee-role
+
+subjects:
+  - apiGroup: rbac.authorization.k8s.io
+    kind: User
+    name: ramesh # "name" is case sensitive, and it is created through aws console
+    
+$ kubectl apply -f 03-aws-auth.yaml
+Warning: resource configmaps/aws-auth is missing the kubectl.kubernetes.io/last-applied-configuration annotation which is required by kubectl apply. kubectl apply should only be used on resources created declaratively by either kubectl create --save-config or kubectl apply. The missing annotation will be patched automatically.
+configmap/aws-auth configured
+```
+- Now, ask ramesh to login and verify the access to the cluster using kubectl command.
+```shell
+Create an Ec2 instance 
+Install kubectl
+Do aws configure 
+$ aws eks update-kubeconfig --name roboshop --region us-east-1
+Added new context arn:aws:eks:us-east-1:<ACCOUNT-ID>:cluster/roboshop to /home/ec2-user/.kube/config
+
+$ kubectl get pods                                      -> ramesh does not have access to default namespace
+Error from server (Forbidden): pods is forbidden: User "ramesh" cannot list resource "pods" in API group "" in the namespace "default"
+
+13.222.134.210 | 172.31.16.221 | t3.micro | null
+[ ec2-user@ip-172-31-16-221 ~ ]$ kubectl get pods -n roboshop   -> ramesh have access to roboshop namespace
+No resources found in roboshop namespace.
+
+$ kubectl get deployment -n roboshop                    -> ramesh does not have access to deployments in roboshop namespace
+Error from server (Forbidden): deployments.apps is forbidden: User "ramesh" cannot list resource "deployments" in API group "apps" in the namespace "roboshop"
+```
+
+### Role and Role Binding     -- Admin
+- Can use the same policy with `ClusterDescribe` permissions in AWS console.
+- Create User (suresh) from AWS console and assign the above created policy to the user.
+
+```shell
+$ kubectl apply -f 04-admin-role.yaml
+$ kubectl get role -n roboshop
+
+$ kubectl apply -f 02-role-binding.yaml
+$ kubectl get rolebinding -n roboshop
+NAME              ROLE                AGE
+trainee-binding   Role/trainee-role   10s
+```
+- Now, create aws-auth configmap in kube-system namespace and add the user ARN to the mapRoles section.
+- This can be done by following command:
+```shell
+$ kubectl get configmap aws-auth -n kube-system -o  yaml                              -> get existing configmap
+apiVersion: v1
+data:
+  mapRoles: |
+    - rolearn: arn:aws:iam::<ACCOUNT-ID>:role/eksctl-roboshop-nodegroup-spot-NodeInstanceRole-k1FHX0MGiC44
+      groups:
+      - system:bootstrappers
+      - system:nodes
+      username: system:node:{{EC2PrivateDNSName}}
+kind: ConfigMap
+metadata:
+  creationTimestamp: "2026-04-19T03:15:37Z"
+  name: aws-auth
+  namespace: kube-system
+  resourceVersion: "1252"
+  uid: fa9bc09e-bd60-4c84-baf4-54ff8bd9cce1
+
+```
+- Now add mapUsers section for the user ARN in the above configmap and apply the changes.
+```shell
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: trainee-binding
+  namespace: roboshop
+
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: trainee-role
+
+subjects:
+  - apiGroup: rbac.authorization.k8s.io
+    kind: User
+    name: ramesh # "name" is case sensitive, and it is created through aws console
+    
+$ kubectl apply -f 03-aws-auth.yaml
+Warning: resource configmaps/aws-auth is missing the kubectl.kubernetes.io/last-applied-configuration annotation which is required by kubectl apply. kubectl apply should only be used on resources created declaratively by either kubectl create --save-config or kubectl apply. The missing annotation will be patched automatically.
+configmap/aws-auth configured
+```
+- Now, ask ramesh to login and verify the access to the cluster using kubectl command.
+```shell
+Create an Ec2 instance 
+Install kubectl
+Do aws configure 
+$ aws eks update-kubeconfig --name roboshop --region us-east-1
+Added new context arn:aws:eks:us-east-1:<ACCOUNT-ID>:cluster/roboshop to /home/ec2-user/.kube/config
+
+$ kubectl get pods                                      -> ramesh does not have access to default namespace
+Error from server (Forbidden): pods is forbidden: User "ramesh" cannot list resource "pods" in API group "" in the namespace "default"
+
+13.222.134.210 | 172.31.16.221 | t3.micro | null
+[ ec2-user@ip-172-31-16-221 ~ ]$ kubectl get pods -n roboshop   -> ramesh have access to roboshop namespace
+No resources found in roboshop namespace.
+
+$ kubectl get deployment -n roboshop                    -> ramesh does not have access to deployments in roboshop namespace
+Error from server (Forbidden): deployments.apps is forbidden: User "ramesh" cannot list resource "deployments" in API group "apps" in the namespace "roboshop"
+```
